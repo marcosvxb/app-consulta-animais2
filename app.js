@@ -68,7 +68,7 @@ function carregarCSV(){
   Papa.parse("dados.csv?v7csvsexo", {
     download: true,
     header: true,
-    delimiter: ";",
+    delimiter: ",",
     skipEmptyLines: true,
     dynamicTyping: false,
     complete: function(results){
