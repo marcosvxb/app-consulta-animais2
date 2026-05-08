@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Consulta Bovinos V7 CSV</title>
+<link rel="manifest" href="manifest.json?v6logo6digitos">
+<link rel="stylesheet" href="style.css?v6logo6digitos">
+<meta name="theme-color" content="#062f28">
+</head>
+<body>
+<main class="app">
+<header class="hero">
+  <div class="hero-top">
+    <img src="logo.png?v6logo6digitos" class="logo" alt="Fazenda Gruta Azul">
+    <span class="badge">Offline</span>
+  </div>
+  <h1>Consulta Bovinos</h1>
+  <p>Versão V7 CSV — busca por animal com sexo</p>
+</header>
+
+<section class="panel search-panel">
+  <label>Animal</label>
+  <input id="animal" inputmode="numeric" placeholder="Ex: 0883157" autocomplete="off">
+  <label>Localidade <span class="muted">(opcional)</span></label>
+  <input id="local" placeholder="Ex: RECRIA B02, S05_A" autocomplete="off">
+  <div class="grid-btn">
+    <button class="primary" onclick="buscar()">Buscar</button>
+    <button class="secondary" onclick="trajetoriaAnimal()">Trajetória do animal</button>
+    <button class="light" onclick="limpar()">Limpar</button>
+  </div>
+  <div id="status" class="status-card">Carregando base...</div>
+</section>
+
+<section class="cards">
+  <div class="card"><span>GMD</span><strong id="gmd">-</strong><small>kg/dia</small></div>
+  <div class="card"><span>DIAS</span><strong id="dias">-</strong><small>permanência</small></div>
+  <div class="card"><span>PESO</span><strong id="peso">-</strong><small>último peso</small></div>
+  <div class="card"><span>REGISTROS</span><strong id="registros">0</strong><small>movimentações</small></div>
+<div class="card"><span>SEXO</span><strong id="sexo">-</strong><small>animal</small></div>
+</section>
+
+<section class="panel">
+  <h2>Timeline</h2>
+  <div id="timeline" class="timeline empty">Nenhum animal selecionado.</div>
+</section>
+
+<section class="panel">
+  <h2>Registros encontrados</h2>
+  <div id="resultado" class="result empty">Nenhum resultado.</div>
+</section>
+
+<section class="info-box">
+  <strong>Todos os animais são exibidos com 6 dígitos.</strong><br>
+  Ex: 22004 → 022004 | 89761 → 089761
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="app.js?v7csvsexo"></script>
+</body>
+</html>

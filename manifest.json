@@ -1,0 +1,9 @@
+{
+  "name": "Consulta Bovinos V6",
+  "short_name": "Bovinos V6",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#edf2f4",
+  "theme_color": "#062f28",
+  "icons": []
+}
