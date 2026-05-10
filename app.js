@@ -39,15 +39,16 @@ function fmt(n, casas=2){
 
 function diasEntre(a,b){ return (!a || !b) ? null : Math.round((b-a)/(1000*60*60*24)); }
 
+function media(arr){
+  const v = arr.filter(x => x !== null && x !== undefined && !isNaN(x));
+  return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null;
+}
+
 function getCampo(obj, nomes){
   for (const n of nomes){
     if (obj[n] !== undefined && obj[n] !== null && String(obj[n]).trim() !== "") return obj[n];
   }
   return "";
-}
-
-function incluiLocalidade(d, local){
-  return d.local_origem.includes(local) || d.local_destino.includes(local);
 }
 
 function iniciarApp(){
@@ -61,7 +62,7 @@ function iniciarApp(){
 }
 
 function carregarCSV(){
-  Papa.parse("dados.csv?v9localidade=" + Date.now(), {
+  Papa.parse("dados.csv?v10localidadeagrupada=" + Date.now(), {
     download: true,
     header: true,
     skipEmptyLines: true,
@@ -124,10 +125,9 @@ function resumoLocalidadeAtual(local){
 
     const ultima = ordenado[ordenado.length - 1];
 
-    // Animal atual na localidade: a última movimentação dele tem destino igual/contendo a localidade buscada.
+    // Animal atual na localidade: última movimentação com destino contendo a localidade pesquisada.
     if(!ultima.local_destino.includes(local)) continue;
 
-    // Entrada mais recente na localidade atual: última linha cujo destino bate com a localidade.
     const entradas = ordenado.filter(x => x.local_destino.includes(local));
     const entradaAtual = entradas[entradas.length - 1] || ultima;
 
@@ -146,51 +146,44 @@ function resumoLocalidadeAtual(local){
       permanencia_atual: permanenciaAtual,
       finalidade: ultima.finalidade || "-",
       origem: entradaAtual.local_origem || "-",
-      destino: entradaAtual.local_destino || "-"
+      destino: ultima.local_destino || entradaAtual.local_destino || "-"
     });
   }
 
   animaisAtuais.sort((a,b) => (b.entrada || 0) - (a.entrada || 0));
 
-  const gmds = animaisAtuais.map(x => x.gmd_global).filter(x => x !== null && !isNaN(x));
-  const pesos = animaisAtuais.map(x => x.peso_atual).filter(x => x !== null && !isNaN(x));
-  const perms = animaisAtuais.map(x => x.permanencia_atual).filter(x => x !== null && !isNaN(x));
-  const entradaMaisRecente = animaisAtuais[0]?.entrada || null;
+  const gruposMap = new Map();
+  for(const a of animaisAtuais){
+    const chave = a.destino || "SEM LOCALIDADE";
+    if(!gruposMap.has(chave)) gruposMap.set(chave, []);
+    gruposMap.get(chave).push(a);
+  }
+
+  const grupos = Array.from(gruposMap.entries()).map(([localidade, animais]) => {
+    const entradaMaisRecente = animais.reduce((max, a) => !max || (a.entrada && a.entrada > max) ? a.entrada : max, null);
+    return {
+      localidade,
+      quantidade: animais.length,
+      entradaMaisRecente,
+      gmdMedio: media(animais.map(x => x.gmd_global)),
+      pesoMedio: media(animais.map(x => x.peso_atual)),
+      permanenciaMedia: media(animais.map(x => x.permanencia_atual)),
+      machos: animais.filter(x => x.sexo === "M" || x.sexo === "MACHO").length,
+      femeas: animais.filter(x => x.sexo === "F" || x.sexo === "FEMEA" || x.sexo === "FÊMEA").length,
+      animais
+    };
+  }).sort((a,b) => b.quantidade - a.quantidade || a.localidade.localeCompare(b.localidade));
 
   return {
     local,
     quantidade: animaisAtuais.length,
-    gmdMedio: gmds.length ? gmds.reduce((a,b)=>a+b,0)/gmds.length : null,
-    pesoMedio: pesos.length ? pesos.reduce((a,b)=>a+b,0)/pesos.length : null,
-    permanenciaMedia: perms.length ? perms.reduce((a,b)=>a+b,0)/perms.length : null,
-    entradaMaisRecente,
-    animais: animaisAtuais
+    gmdMedio: media(animaisAtuais.map(x => x.gmd_global)),
+    pesoMedio: media(animaisAtuais.map(x => x.peso_atual)),
+    permanenciaMedia: media(animaisAtuais.map(x => x.permanencia_atual)),
+    entradaMaisRecente: animaisAtuais[0]?.entrada || null,
+    animais: animaisAtuais,
+    grupos
   };
-}
-
-function buscar(){
-  const animal = animal6(document.getElementById("animal").value);
-  const local = normalizarTexto(document.getElementById("local").value);
-
-  if(!animal && !local){
-    document.getElementById("status").innerText = "Digite o número do animal ou uma localidade.";
-    return;
-  }
-
-  // Busca por localidade sem animal: mostra situação atual da localidade.
-  if(local && !animal){
-    const resumo = resumoLocalidadeAtual(local);
-    atualizarTelaLocalidade(resumo);
-    return;
-  }
-
-  const resultado = dados.filter(d => {
-    if(animal && d.nome_usual !== animal) return false;
-    if(local && !incluiLocalidade(d, local)) return false;
-    return true;
-  });
-
-  atualizarTelaAnimal(resultado, animal);
 }
 
 function atualizarCardsBasicos({gmd=null, dias=null, peso=null, registros=0, sexo="-"}){
@@ -208,7 +201,30 @@ function atualizarCardsBasicos({gmd=null, dias=null, peso=null, registros=0, sex
   }
 }
 
-function atualizarTelaLocalidade(resumo){
+function buscar(){
+  const animal = animal6(document.getElementById("animal").value);
+  const local = normalizarTexto(document.getElementById("local").value);
+
+  if(!animal && !local){
+    document.getElementById("status").innerText = "Digite o número do animal ou uma localidade.";
+    return;
+  }
+
+  if(local && !animal){
+    atualizarTelaLocalidadeAgrupada(resumoLocalidadeAtual(local));
+    return;
+  }
+
+  const resultado = dados.filter(d => {
+    if(animal && d.nome_usual !== animal) return false;
+    if(local && !(d.local_origem.includes(local) || d.local_destino.includes(local))) return false;
+    return true;
+  });
+
+  atualizarTelaAnimal(resultado, animal);
+}
+
+function atualizarTelaLocalidadeAgrupada(resumo){
   const status = document.getElementById("status");
   const res = document.getElementById("resultado");
   const timeline = document.getElementById("timeline");
@@ -224,16 +240,16 @@ function atualizarTelaLocalidade(resumo){
   if(resumo.quantidade === 0){
     if(status) status.innerText = `Nenhum animal atual encontrado em ${resumo.local}.`;
     if(res){ res.className = "result empty"; res.innerText = "Nenhum resultado."; }
-    if(timeline){ timeline.className = "timeline empty"; timeline.innerText = "Nenhum animal atual nessa localidade."; }
+    if(timeline){ timeline.className = "timeline empty"; timeline.innerText = "Nenhum grupo encontrado nessa localidade."; }
     return;
   }
 
   if(status){
     status.innerHTML =
       `<b>${resumo.quantidade.toLocaleString("pt-BR")} animal(is) atualmente em ${resumo.local}</b><br>` +
+      `${resumo.grupos.length.toLocaleString("pt-BR")} grupo(s) de localidade • ` +
       `Entrada mais recente: ${dataBR(resumo.entradaMaisRecente)} • ` +
-      `GMD médio: ${fmt(resumo.gmdMedio, 2)} kg/dia • ` +
-      `Peso médio: ${fmt(resumo.pesoMedio, 0)} kg`;
+      `GMD médio: ${fmt(resumo.gmdMedio, 2)} kg/dia`;
   }
 
   if(res){
@@ -241,44 +257,47 @@ function atualizarTelaLocalidade(resumo){
     res.innerHTML = `
       <div class="record summary">
         <div class="record-head">
-          <span class="record-date">Resumo atual da localidade</span>
+          <span class="record-date">Resumo agrupado por localidade atual</span>
           <span class="weight">${resumo.quantidade.toLocaleString("pt-BR")} animais</span>
         </div>
-        <p>Localidade: <b>${resumo.local}</b></p>
+        <p>Busca: <b>${resumo.local}</b></p>
+        <p>Grupos encontrados: <b>${resumo.grupos.length.toLocaleString("pt-BR")}</b></p>
         <p>Entrada mais recente: <b>${dataBR(resumo.entradaMaisRecente)}</b></p>
-        <p>GMD médio global dos animais atuais: <b>${fmt(resumo.gmdMedio, 2)} kg/dia</b></p>
+        <p>GMD médio global: <b>${fmt(resumo.gmdMedio, 2)} kg/dia</b></p>
         <p>Peso médio atual: <b>${fmt(resumo.pesoMedio, 0)} kg</b></p>
-        <p>Permanência média desde a entrada atual: <b>${fmt(resumo.permanenciaMedia, 0)} dias</b></p>
+        <p>Permanência média: <b>${fmt(resumo.permanenciaMedia, 0)} dias</b></p>
       </div>
-      ${resumo.animais.slice(0, 300).map(a => `
+      ${resumo.grupos.map(g => `
         <div class="record">
           <div class="record-head">
-            <span class="record-date">${a.animal}</span>
-            <span class="weight">${a.peso_atual ? fmt(a.peso_atual,0) + " kg" : "-"}</span>
+            <span class="record-date">${g.localidade}</span>
+            <span class="weight">${g.quantidade.toLocaleString("pt-BR")} animais</span>
           </div>
-          <p>Sexo: <b>${a.sexo}</b></p>
-          <p>Entrada atual: <b>${a.entrada_br}</b></p>
-          <p>Origem → Destino: <b>${a.origem} → ${a.destino}</b></p>
-          <p>GMD global: <b>${a.gmd_global === null ? "-" : fmt(a.gmd_global,2) + " kg/dia"}</b></p>
-          <p>Permanência atual: <b>${a.permanencia_atual === null ? "-" : a.permanencia_atual.toLocaleString("pt-BR") + " dias"}</b></p>
-          <p>Finalidade: <b>${a.finalidade}</b></p>
+          <p>Entrada mais recente: <b>${dataBR(g.entradaMaisRecente)}</b></p>
+          <p>GMD médio: <b>${fmt(g.gmdMedio, 2)} kg/dia</b></p>
+          <p>Peso médio: <b>${fmt(g.pesoMedio, 0)} kg</b></p>
+          <p>Permanência média: <b>${fmt(g.permanenciaMedia, 0)} dias</b></p>
+          <p>Sexo: <b>${g.machos} M</b> • <b>${g.femeas} F</b> • <b>${g.quantidade - g.machos - g.femeas} não informado/outros</b></p>
+          <p>Animais: <b>${g.animais.slice(0, 35).map(x => x.animal).join(", ")}${g.animais.length > 35 ? "..." : ""}</b></p>
         </div>
       `).join("")}
     `;
   }
 
+  // Timeline agrupada por localidade, não por animal.
   if(timeline){
     timeline.className = "timeline";
-    timeline.innerHTML = resumo.animais.slice(0, 300).map(a => `
+    timeline.innerHTML = resumo.grupos.map(g => `
       <div class="step">
-        <div class="date">${a.entrada_br}</div>
+        <div class="date">${dataBR(g.entradaMaisRecente)}</div>
         <div class="bubble">
           <div class="bubble-card">
-            <strong>${a.animal} • ${a.destino}</strong>
+            <strong>${g.localidade}</strong>
             <small>
-              Peso atual: ${a.peso_atual ? fmt(a.peso_atual,0) + " kg" : "-"}
-              • GMD: ${a.gmd_global === null ? "-" : fmt(a.gmd_global,2)}
-              • ${a.permanencia_atual ?? "-"} dias
+              ${g.quantidade.toLocaleString("pt-BR")} animais
+              • GMD médio: ${fmt(g.gmdMedio,2)} kg/dia
+              • Peso médio: ${fmt(g.pesoMedio,0)} kg
+              • Permanência: ${fmt(g.permanenciaMedia,0)} dias
             </small>
           </div>
         </div>
