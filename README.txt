@@ -1,24 +1,17 @@
-APP CONSULTA BOVINOS - V7 CSV
+APP CONSULTA BOVINOS - V8 CSV
 
-Esta versão usa dados.csv em vez de dados_movimentacoes.json.
-
-Arquivos principais:
-- index.html
-- app.js
-- style.css
-- dados.csv
-- logo.png
-- manifest.json
-- service-worker.js
-
-Como publicar no Vercel:
+Atualização:
 1. Extraia este ZIP.
-2. Suba todos os arquivos descompactados para o GitHub.
-3. No Vercel, importe o repositório.
-4. Framework Preset: Other.
-5. Build Command: deixe vazio.
-6. Output Directory: deixe vazio ou use ./
-7. Clique em Deploy.
+2. No GitHub, abra o repositório app-consulta-animais2.
+3. Clique em Add file > Upload files.
+4. Arraste TODOS os arquivos desta pasta extraída.
+5. Confirme a substituição dos arquivos existentes.
+6. Clique em Commit changes.
+7. Aguarde o Vercel publicar automaticamente.
+8. No site, pressione Ctrl + Shift + R.
 
-Importante:
-O arquivo index.html precisa ficar na raiz da pasta.
+Esta versão:
+- usa dados.csv;
+- detecta vírgula ou ponto e vírgula automaticamente;
+- remove cache antigo/service worker;
+- mantém sexo do animal.
