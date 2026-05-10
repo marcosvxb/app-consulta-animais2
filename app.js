@@ -88,7 +88,7 @@ function iniciarApp(){
 }
 
 function carregarCSV(){
-  Papa.parse("dados.csv?v11localidadeexata=" + Date.now(), {
+  Papa.parse("dados.csv?v12sexocorrigido=" + Date.now(), {
     download: true,
     header: true,
     skipEmptyLines: true,
@@ -162,7 +162,7 @@ function resumoLocalidadeAtual(local){
 
     animaisAtuais.push({
       animal,
-      sexo: (ordenado.find(x => x.sx) || {}).sx || "-",
+      sexo: (ordenado.find(x => x.sx) || {}).sx || "M",
       entrada: entradaAtual.data_obj,
       entrada_br: dataBR(entradaAtual.data_obj),
       peso_entrada: entradaAtual.peso || null,
@@ -170,9 +170,9 @@ function resumoLocalidadeAtual(local){
       gmd_global: rg.gmd,
       dias_global: rg.dias,
       permanencia_atual: permanenciaAtual,
-      finalidade: ultima.finalidade || "-",
-      origem: entradaAtual.local_origem || "-",
-      destino: ultima.local_destino || entradaAtual.local_destino || "-"
+      finalidade: ultima.finalidade || "M",
+      origem: entradaAtual.local_origem || "M",
+      destino: ultima.local_destino || entradaAtual.local_destino || "M"
     });
   }
 
@@ -218,7 +218,7 @@ function atualizarCardsBasicos({gmd=null, dias=null, peso=null, registros=0, sex
     dias: dias === null ? "-" : Math.round(dias).toLocaleString("pt-BR"),
     peso: peso === null ? "-" : fmt(peso, 0),
     registros: registros.toLocaleString("pt-BR"),
-    sexo: sexo || "-"
+    sexo: sexo || "M"
   };
 
   for(const [id, val] of Object.entries(ids)){
@@ -260,7 +260,10 @@ function atualizarTelaLocalidadeAgrupada(resumo){
     dias: resumo.permanenciaMedia,
     peso: resumo.pesoMedio,
     registros: resumo.quantidade,
-    sexo: "M/F"
+    sexo:
+      resumo.animais.every(x => x.sexo === "M" || x.sexo === "MACHO") ? "M" :
+      resumo.animais.every(x => x.sexo === "F" || x.sexo === "FEMEA" || x.sexo === "FÊMEA") ? "F" :
+      "M/F"
   });
 
   if(resumo.quantidade === 0){
@@ -303,7 +306,11 @@ function atualizarTelaLocalidadeAgrupada(resumo){
           <p>GMD médio: <b>${fmt(g.gmdMedio, 2)} kg/dia</b></p>
           <p>Peso médio: <b>${fmt(g.pesoMedio, 0)} kg</b></p>
           <p>Permanência média: <b>${fmt(g.permanenciaMedia, 0)} dias</b></p>
-          <p>Sexo: <b>${g.machos} M</b> • <b>${g.femeas} F</b> • <b>${g.quantidade - g.machos - g.femeas} não informado/outros</b></p>
+          <p>Sexo: <b>${
+            g.femeas === 0 ? "M" :
+            g.machos === 0 ? "F" :
+            `${g.machos} M • ${g.femeas} F`
+          }</b></p>
           <p>Animais: <b>${g.animais.slice(0, 35).map(x => x.animal).join(", ")}${g.animais.length > 35 ? "..." : ""}</b></p>
         </div>
       `).join("")}
@@ -357,7 +364,7 @@ function atualizarTelaAnimal(lista, animalBuscado=""){
     if(dias && dias > 0) gmd = (ultimoPeso.peso - primeiroPeso.peso) / dias;
   }
 
-  const sexoAnimal = (ordenado.find(x => x.sx) || {}).sx || "-";
+  const sexoAnimal = (ordenado.find(x => x.sx) || {}).sx || "M";
   atualizarCardsBasicos({gmd, dias, peso:pesoFinal, registros:lista.length, sexo:sexoAnimal});
 
   if(status){
@@ -369,14 +376,14 @@ function atualizarTelaAnimal(lista, animalBuscado=""){
     res.innerHTML = ordenado.map(d => `
       <div class="record">
         <div class="record-head">
-          <span class="record-date">${d.data_br || d.data || "-"}</span>
-          <span class="weight">${d.peso || "-"} kg</span>
+          <span class="record-date">${d.data_br || d.data || "M"}</span>
+          <span class="weight">${d.peso || "M"} kg</span>
         </div>
-        <p>Animal: <b>${d.nome_usual || "-"}</b></p>
-        <p>Sexo: <b>${d.sx || "-"}</b></p>
-        <p>Origem: <b>${d.local_origem || "-"}</b></p>
-        <p>Destino: <b>${d.local_destino || "-"}</b></p>
-        <p>Finalidade: <b>${d.finalidade || "-"}</b></p>
+        <p>Animal: <b>${d.nome_usual || "M"}</b></p>
+        <p>Sexo: <b>${d.sx || "M"}</b></p>
+        <p>Origem: <b>${d.local_origem || "M"}</b></p>
+        <p>Destino: <b>${d.local_destino || "M"}</b></p>
+        <p>Finalidade: <b>${d.finalidade || "M"}</b></p>
       </div>
     `).join("");
   }
@@ -385,12 +392,12 @@ function atualizarTelaAnimal(lista, animalBuscado=""){
     timeline.className = "timeline";
     timeline.innerHTML = ordenado.map(d => `
       <div class="step">
-        <div class="date">${d.data_br || d.data || "-"}</div>
+        <div class="date">${d.data_br || d.data || "M"}</div>
         <div class="bubble">
           <div class="bubble-card">
-            <strong>${d.local_origem || "-"} → ${d.local_destino || "-"}</strong>
+            <strong>${d.local_origem || "M"} → ${d.local_destino || "M"}</strong>
             <small>
-              Peso: ${d.peso || "-"} kg
+              Peso: ${d.peso || "M"} kg
               ${d.sx ? " • Sexo: " + d.sx : ""}
               ${d.finalidade ? " • Finalidade: " + d.finalidade : ""}
             </small>

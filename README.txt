@@ -1,10 +1,10 @@
-APP CONSULTA BOVINOS - V8 / Localidade exata
+APP CONSULTA BOVINOS - V8 / Sexo corrigido
 
-Mudança principal:
-- Campo Localidade agora tem lista de sugestões das localidades existentes.
-- A busca por localidade agora usa correspondência EXATA.
-- Exemplo: pesquisar CURRAL C04 mostra somente CURRAL C04, não mostra MANEJO CURRAL C04.
-- Resultado e timeline continuam agrupados por localidade atual.
+Correções:
+- Se existir somente machos na localidade, aparece apenas "M".
+- Se existir somente fêmeas na localidade, aparece apenas "F".
+- Não aparece mais "não informado/outros".
+- Base considerada apenas com sexo M ou F.
 
 Atualização:
 1. Extraia este ZIP.
@@ -14,4 +14,4 @@ Atualização:
 5. Confirme substituição.
 6. Commit changes.
 7. Aguarde o Vercel.
-8. No site, pressione Ctrl + Shift + R.
+8. Ctrl + Shift + R no site.
