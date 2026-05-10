@@ -39,6 +39,14 @@ function fmt(n, casas=2){
 
 function diasEntre(a,b){ return (!a || !b) ? null : Math.round((b-a)/(1000*60*60*24)); }
 
+function localDestinoIgual(d, local){
+  return normalizarTexto(d.local_destino) === local;
+}
+
+function localOrigemOuDestinoIgual(d, local){
+  return normalizarTexto(d.local_origem) === local || normalizarTexto(d.local_destino) === local;
+}
+
 function media(arr){
   const v = arr.filter(x => x !== null && x !== undefined && !isNaN(x));
   return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null;
@@ -51,18 +59,36 @@ function getCampo(obj, nomes){
   return "";
 }
 
+function atualizarListaLocalidades(){
+  const dl = document.getElementById("listaLocalidades");
+  if(!dl) return;
+
+  const set = new Set();
+  dados.forEach(d => {
+    if(d.local_destino) set.add(d.local_destino);
+  });
+
+  dl.innerHTML = Array.from(set)
+    .sort((a,b) => a.localeCompare(b))
+    .map(l => `<option value="${l}"></option>`)
+    .join("");
+}
+
 function iniciarApp(){
   const animais = new Set(dados.map(d => d.nome_usual));
+  atualizarListaLocalidades();
+
   const st = document.getElementById("status");
   if(st) {
     st.innerHTML =
       `<b>Base carregada</b><br>` +
-      `${dados.length.toLocaleString("pt-BR")} registros • ${animais.size.toLocaleString("pt-BR")} animais`;
+      `${dados.length.toLocaleString("pt-BR")} registros • ${animais.size.toLocaleString("pt-BR")} animais<br>` +
+      `<small>Digite ou selecione uma localidade exata na lista.</small>`;
   }
 }
 
 function carregarCSV(){
-  Papa.parse("dados.csv?v10localidadeagrupada=" + Date.now(), {
+  Papa.parse("dados.csv?v11localidadeexata=" + Date.now(), {
     download: true,
     header: true,
     skipEmptyLines: true,
@@ -126,9 +152,9 @@ function resumoLocalidadeAtual(local){
     const ultima = ordenado[ordenado.length - 1];
 
     // Animal atual na localidade: última movimentação com destino contendo a localidade pesquisada.
-    if(!ultima.local_destino.includes(local)) continue;
+    if(!localDestinoIgual(ultima, local)) continue;
 
-    const entradas = ordenado.filter(x => x.local_destino.includes(local));
+    const entradas = ordenado.filter(x => localDestinoIgual(x, local));
     const entradaAtual = entradas[entradas.length - 1] || ultima;
 
     const rg = resumoAnimalGlobal(ordenado);
@@ -217,7 +243,7 @@ function buscar(){
 
   const resultado = dados.filter(d => {
     if(animal && d.nome_usual !== animal) return false;
-    if(local && !(d.local_origem.includes(local) || d.local_destino.includes(local))) return false;
+    if(local && !localOrigemOuDestinoIgual(d, local)) return false;
     return true;
   });
 

@@ -1,10 +1,10 @@
-APP CONSULTA BOVINOS - V8 / Localidade agrupada
+APP CONSULTA BOVINOS - V8 / Localidade exata
 
 Mudança principal:
-- Quando pesquisar por LOCALIDADE sem informar animal, o resultado e a timeline aparecem agrupados por localidade atual.
-- A timeline não lista animais individualmente na busca por local.
-- Cada grupo mostra quantidade, entrada mais recente, GMD médio, peso médio e permanência média.
-- A busca por animal individual continua mostrando a trajetória individual.
+- Campo Localidade agora tem lista de sugestões das localidades existentes.
+- A busca por localidade agora usa correspondência EXATA.
+- Exemplo: pesquisar CURRAL C04 mostra somente CURRAL C04, não mostra MANEJO CURRAL C04.
+- Resultado e timeline continuam agrupados por localidade atual.
 
 Atualização:
 1. Extraia este ZIP.

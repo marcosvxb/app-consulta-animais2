@@ -23,8 +23,10 @@
   <label>Animal</label>
   <input id="animal" inputmode="numeric" placeholder="Ex: 0883157" autocomplete="off">
   <label>Localidade <span class="muted">(opcional)</span></label>
-  <input id="local" placeholder="Ex: RECRIA B02, S05_A" autocomplete="off">
-  <div class="grid-btn">
+  <input id="local" placeholder="Ex: RECRIA B02, S05_A" autocomplete="off" list="listaLocalidades">
+  
+<datalist id="listaLocalidades"></datalist>
+<div class="grid-btn">
     <button class="primary" onclick="buscar()">Buscar</button>
     <button class="secondary" onclick="trajetoriaAnimal()">Trajetória do animal</button>
     <button class="light" onclick="limpar()">Limpar</button>
@@ -56,6 +58,6 @@
 </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-<script src="app.js?v10localidadeagrupada"></script>
+<script src="app.js?v11localidadeexata"></script>
 </body>
 </html>
